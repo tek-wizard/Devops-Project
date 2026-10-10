@@ -1,0 +1,32 @@
+# Secrets / local env
+.env
+*.tfvars
+!*.tfvars.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+*.sqlite
+*.db
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Kubernetes / local tooling
+kubeconfig
+*.kubeconfig
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
