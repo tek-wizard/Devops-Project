@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars and adjust. terraform.tfvars is gitignored.
+# NOTE: this file contains NO credentials. AWS auth comes from your
+# AWS CLI profile / environment, never from this file.
+
+region             = "ap-south-1"
+project            = "deskflow"
+cluster_name       = "deskflow-eks"
+cluster_version    = "1.30"
+node_instance_type = "t3.small"
+node_desired_size  = 2
