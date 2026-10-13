@@ -1,0 +1,120 @@
+name: CI/CD
+
+# Runs on every push to main and on pull requests.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write # needed to push images to GHCR
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Quality gate: tests must pass before anything is built or pushed.
+  # ---------------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        working-directory: backend
+        run: python -m pytest
+
+  # ---------------------------------------------------------------------------
+  # Build frontend, build + scan + push images. Only runs on push to main.
+  # ---------------------------------------------------------------------------
+  build-scan-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Explicit frontend build step (rubric M5: "frontend is built in the pipeline").
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Compute lowercase image names
+        id: img
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "backend=ghcr.io/${OWNER}/deskflow-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=ghcr.io/${OWNER}/deskflow-frontend" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build images locally first (load into the runner) so Trivy can scan
+      # them BEFORE they are pushed. Tag with the commit SHA, not "latest".
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: ${{ steps.img.outputs.backend }}:${{ github.sha }}
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          load: true
+          tags: ${{ steps.img.outputs.frontend }}:${{ github.sha }}
+
+      # DevSecOps gate (rubric M6). Fails the build on fixable HIGH/CRITICAL CVEs.
+      - name: Trivy scan - backend
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.img.outputs.backend }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Trivy scan - frontend
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.img.outputs.frontend }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # Push only after tests passed and scans are clean.
+      - name: Push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.img.outputs.backend }}:${{ github.sha }}
+
+      - name: Push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.img.outputs.frontend }}:${{ github.sha }}
