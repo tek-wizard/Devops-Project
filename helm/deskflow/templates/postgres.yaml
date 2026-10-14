@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "deskflow.postgresName" . }}
+  labels:
+    {{- include "deskflow.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.postgres.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "deskflow.postgresName" . }}
+  labels:
+    {{- include "deskflow.labels" . | nindent 4 }}
+    app: {{ include "deskflow.postgresName" . }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ include "deskflow.postgresName" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "deskflow.postgresName" . }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-db
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "deskflow.postgresName" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "deskflow.postgresName" . }}
+  labels:
+    {{- include "deskflow.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "deskflow.postgresName" . }}
+  ports:
+    - port: 5432
+      targetPort: 5432

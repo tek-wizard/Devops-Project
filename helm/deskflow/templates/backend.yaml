@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "deskflow.backendName" . }}
+  labels:
+    {{- include "deskflow.labels" . | nindent 4 }}
+    app: {{ include "deskflow.backendName" . }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "deskflow.backendName" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "deskflow.backendName" . }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-db
+                  key: DATABASE_URL
+          ports:
+            - name: http
+              containerPort: {{ .Values.backend.port }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "deskflow.backendName" . }}
+  labels:
+    {{- include "deskflow.labels" . | nindent 4 }}
+    app: {{ include "deskflow.backendName" . }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "deskflow.backendName" . }}
+  ports:
+    - name: http
+      port: {{ .Values.backend.port }}
+      targetPort: http
