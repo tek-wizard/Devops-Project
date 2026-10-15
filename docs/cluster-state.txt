@@ -1,0 +1,24 @@
+### kubectl -n deskflow get pods
+NAME                                 READY   STATUS    RESTARTS        AGE
+deskflow-backend-7cd49859ff-2dtm9    1/1     Running   3 (9m53s ago)   10m
+deskflow-backend-7cd49859ff-zfgxh    1/1     Running   3 (9m51s ago)   10m
+deskflow-frontend-85c89959fd-cnpfm   1/1     Running   0               10m
+deskflow-frontend-85c89959fd-fhfmf   1/1     Running   0               10m
+deskflow-postgres-68f6d58cb5-xp7cz   1/1     Running   0               10m
+
+### kubectl -n deskflow get svc,ingress,hpa
+NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/deskflow-backend    ClusterIP   10.103.170.248   <none>        8000/TCP   10m
+service/deskflow-frontend   ClusterIP   10.106.125.226   <none>        80/TCP     10m
+service/deskflow-postgres   ClusterIP   10.107.185.121   <none>        5432/TCP   10m
+
+NAME                                 CLASS   HOSTS            ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/deskflow   nginx   deskflow.local   192.168.67.2   80      10m
+
+NAME                                                   REFERENCE                     TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/deskflow-backend   Deployment/deskflow-backend   cpu: 5%/60%   2         5         2          10m
+
+### helm list (both releases)
+NAME      	NAMESPACE 	REVISION	UPDATED                             	STATUS  	CHART                        	APP VERSION
+deskflow  	deskflow  	2       	2026-10-16 21:36:44.354965 +0530 IST	deployed	deskflow-0.1.0               	1.0.0      
+monitoring	monitoring	1       	2026-10-16 21:34:18.092986 +0530 IST	deployed	kube-prometheus-stack-92.10.0	v0.94.1    
