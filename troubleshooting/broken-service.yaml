@@ -1,0 +1,21 @@
+# Lab 2: a Service whose selector has a typo (deskflow-bakend), so it matches
+# no pods, has zero Endpoints, and every request to it fails.
+#
+#   kubectl apply -f troubleshooting/broken-service.yaml
+#   kubectl -n deskflow get endpoints broken-service
+#   kubectl -n deskflow describe svc broken-service
+#
+# Fix: correct the selector to app: deskflow-backend, re-apply, then:
+# kubectl delete -f troubleshooting/broken-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-service
+  namespace: deskflow
+spec:
+  type: ClusterIP
+  selector:
+    app: deskflow-bakend
+  ports:
+    - port: 8000
+      targetPort: http

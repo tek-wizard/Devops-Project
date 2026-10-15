@@ -1,0 +1,29 @@
+# Lab 1: a Deployment that never starts because the image tag does not
+# exist, so the pod stays in ImagePullBackOff / ErrImagePull.
+#
+#   kubectl apply -f troubleshooting/broken-image.yaml
+#   kubectl -n deskflow get pods
+#   kubectl -n deskflow describe pod -l app=broken-image | tail -20
+#
+# Fix: set the image to one that exists (deskflow-backend:local), re-apply,
+# then: kubectl delete -f troubleshooting/broken-image.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-image
+  namespace: deskflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken-image
+  template:
+    metadata:
+      labels:
+        app: broken-image
+    spec:
+      containers:
+        - name: app
+          image: deskflow-backend:does-not-exist
+          ports:
+            - containerPort: 8000
