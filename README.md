@@ -10,6 +10,13 @@ real work is the pipeline around the app: tests, containers, CI/CD with image
 scanning, infrastructure as code on AWS, a Kubernetes deployment packaged with
 Helm, and Prometheus/Grafana monitoring.
 
+## Demo video
+
+A walkthrough of the project and a live demo of the pipeline, from a commit to
+the updated deployment:
+
+https://drive.google.com/file/d/1nqGwT-GRxnouYLkADJbRmzci-Vf2m1f0/view?usp=sharing
+
 ## Problem and objectives
 
 Small teams often track support requests in spreadsheets or chat. Tickets get
@@ -277,7 +284,7 @@ gateway and EC2 nodes are gone, since those are the billable parts.
 | M7 Terraform | VPC + 2 public subnets + EKS node group, init/validate clean, tfvars.example |
 | M8 K8s + Helm | namespace, chart, helm upgrade --install, 2 replicas each, Services, Ingress |
 | M9 Observability | /metrics, Prometheus scraping, Grafana live panels |
-| M10 Docs + demo | this README and a live-change demo |
+| M10 Docs + demo | this README and a recorded walkthrough with a live-change demo |
 
 ## Credits
 
