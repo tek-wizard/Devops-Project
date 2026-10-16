@@ -87,22 +87,20 @@ jobs:
           load: true
           tags: ${{ steps.img.outputs.frontend }}:${{ github.sha }}
 
-      # DevSecOps gate (rubric M6). Fails the build on fixable HIGH/CRITICAL CVEs.
+      # Scan both images with Trivy and fail on fixable HIGH/CRITICAL CVEs.
       - name: Trivy scan - backend
-        uses: aquasecurity/trivy-action@v0.33.0
-        with:
-          image-ref: ${{ steps.img.outputs.backend }}:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.65.0 image --scanners vuln \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            ${{ steps.img.outputs.backend }}:${{ github.sha }}
 
       - name: Trivy scan - frontend
-        uses: aquasecurity/trivy-action@v0.33.0
-        with:
-          image-ref: ${{ steps.img.outputs.frontend }}:${{ github.sha }}
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.65.0 image --scanners vuln \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            ${{ steps.img.outputs.frontend }}:${{ github.sha }}
 
       # Push only after tests passed and scans are clean.
       - name: Push backend image
