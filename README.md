@@ -126,7 +126,11 @@ Postgres database is never touched.
    the commit SHA), scan both with Trivy, and push to GHCR.
 
 Images are tagged with the Git commit SHA instead of `latest`, so every image
-maps back to one commit.
+maps back to one commit. The pipeline runs green on GitHub, and the images are
+published to GHCR as `ghcr.io/tek-wizard/deskflow-backend` and
+`ghcr.io/tek-wizard/deskflow-frontend`.
+
+![CI pipeline](docs/images/03-ci-pipeline.jpg)
 
 ## Security scanning with Trivy
 
