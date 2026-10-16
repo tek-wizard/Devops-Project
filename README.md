@@ -222,7 +222,11 @@ kubectl get nodes
 terraform destroy      # tear everything down when finished
 ```
 
-`terraform init` and `terraform validate` were run and pass.
+This was run against a real AWS account. `terraform apply` created the VPC
+(10.0.0.0/16), the subnets across two availability zones, and an EKS control
+plane that reached ACTIVE status (see `docs/eks-evidence.txt`), then everything
+was removed with `terraform destroy`. `cluster_version` is set to 1.34, a
+currently supported EKS release.
 
 ## IAM and secure authentication
 
